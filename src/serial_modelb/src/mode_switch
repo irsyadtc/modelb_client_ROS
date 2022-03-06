@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+
+import rospy
+from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
+from std_msgs.msg import String
+
+def teleBoolCallback(data):
+    global tele_bool
+    if tele_bool != data.data and data.data == True:
+        rospy.loginfo("joystick")
+    elif tele_bool != data.data and data.data == False:
+        rospy.loginfo("auto")
+    tele_bool = data.data
+    
+
+def teleopCallback(data):
+    #global tele_op
+    #tele_op = Twist()
+    tele_op.linear.x = data.linear.x; tele_op.linear.y = data.linear.y; tele_op.linear.z = data.linear.z
+    tele_op.angular.x = data.angular.x; tele_op.angular.y = data.angular.y; tele_op.angular.z = data.angular.z
+
+def autoCallback(data):
+    
+    auto.linear.x = data.linear.x; auto.linear.y = data.linear.y; auto.linear.z = data.linear.z
+    auto.angular.x = data.angular.x; auto.angular.y = data.angular.y; auto.angular.z = data.angular.z
+
+def switch():
+    pub = rospy.Publisher('cmd_vel', Twist, queue_size=5)
+    rospy.Subscriber("tele_bool", Bool, teleBoolCallback)
+    rospy.Subscriber("cmd_teleop", Twist, teleopCallback)
+    rospy.Subscriber("cmd_auto", Twist, autoCallback)
+    rospy.init_node('mode_switch', anonymous=True)
+    rate = rospy.Rate(50)
+    twist = Twist()
+    global tele_op
+    tele_op = Twist()
+    global auto
+    auto = Twist()
+
+    rospy.loginfo("mode_switch starts: joystick")
+    while not rospy.is_shutdown():
+        #process	    
+        
+        if tele_bool == True:
+            #Joystick
+            
+            twist.linear.x = tele_op.linear.x; twist.linear.y = tele_op.linear.y; twist.linear.z = tele_op.linear.z
+            twist.angular.x = tele_op.angular.x; twist.angular.y = tele_op.angular.y; twist.angular.z = tele_op.angular.z
+        else:
+            #auto
+            
+            twist.linear.x = auto.linear.x; twist.linear.y = auto.linear.y; twist.linear.z = auto.linear.z
+            twist.angular.x = auto.angular.x; twist.angular.y = auto.angular.y; twist.angular.z = auto.angular.z
+        
+        pub.publish(twist)
+        rate.sleep()
+
+if __name__ == '__main__':
+    tele_bool = True
+    try:
+        switch()
+    except rospy.ROSInterruptException:
+        pass

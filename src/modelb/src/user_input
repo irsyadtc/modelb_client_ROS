@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2022, CAREM UTP.
+# All rights reserved.
+#
+# Date: 20/02/2022
+#
+
+import rospy
+from std_msgs.msg import String
+import sys, select, termios, tty
+
+
+msg = """
+KEY IN COMMAND: 
+---------------------------
+
+CTRL-C to quit
+"""
+   
+
+if __name__=="__main__":
+    settings = termios.tcgetattr(sys.stdin)
+
+    rospy.init_node('teleop')
+    user_input_pub = rospy.Publisher("user_input", String, queue_size=5)
+
+    try:
+        print(msg)
+        while not rospy.is_shutdown():
+            something = input()
+            if something == "exit":
+                sys.exit()
+            else:
+                user_in = String()
+                user_in.data = something
+                user_input_pub.publish(user_in)
+                rospy.loginfo(something)
+
+    except rospy.ROSInterruptException:
+        print(rospy.ROSInterruptException)

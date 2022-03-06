@@ -1,0 +1,135 @@
+#!/usr/bin/env python
+
+# 
+# DUMMY ODOM
+#	Author: Muhammad Irsyad Sahalan
+#	Date : 25/02/2022
+#	Descripton : dummy odometry NOTE: ASSUME WHEELCHAIR MOTION IS MOVING ON XY-PLANE ONLY 
+# 	license :
+# 
+
+import rospy
+import tf_conversions
+import tf2_ros
+from geometry_msgs.msg import Twist, TransformStamped
+from nav_msgs.msg import Odometry
+import time
+from math import acos, sin, cos, sqrt, pi
+
+second = 0
+second_prev = 0
+
+
+def cmdAutoCallback(data):
+    global second
+    global second_prev
+    odom_ = Odometry()
+    second = rospy.get_time()
+    angle = float
+    angle = 0.0
+
+    #prev orientation (quarternion to angle)
+    if odom.pose.pose.orientation.w > 0.9999 and odom.pose.pose.orientation.w < 1.0001:
+        x = 0
+        y = 0
+        z = -1
+    else:    
+        denom = sqrt(1-pow(odom.pose.pose.orientation.w,2))
+        x = 0
+        y = 0
+        z = (odom.pose.pose.orientation.z/denom)
+
+    angle = 2*acos(odom.pose.pose.orientation.w)
+
+
+    #add operation #####################
+    second_period = second-second_prev
+    #angular.x & y assumed = 0
+    val = data.angular.z*second_period
+    
+    angle_new = angle + val
+    
+    if angle_new < 0:
+        rem_ = angle_new%(2*pi) #get remainder
+        angle_new = 2*pi + rem_
+    if angle_new > 2*pi:
+        rem_ = angle_new%(2*pi) #get remainder
+        angle_new = rem_
+
+    z_new = 1
+
+    #convert to quarternion
+    sin_angle = sin(angle_new/2)
+    odom.pose.pose.orientation.x = 0
+    odom.pose.pose.orientation.y = 0
+    odom.pose.pose.orientation.z = z_new*sin_angle
+    odom.pose.pose.orientation.w = cos(angle_new/2)
+    #calculate motion at x-axis & y-axis
+    odom.pose.pose.position.x = odom.pose.pose.position.x + data.linear.x*cos(angle_new)
+    odom.pose.pose.position.y = odom.pose.pose.position.y + data.linear.x*sin(angle_new)
+
+    second_prev = second
+
+    
+    
+    
+def operation():
+    rate = rospy.Rate(30)
+    while not rospy.is_shutdown():
+        odom.header.seq = odom.header.seq + 1
+        odom.header.stamp = rospy.Time.now()
+        odom_pub.publish(odom)
+
+        tran.header.seq = odom.header.seq
+        tran.header.stamp.nsec = odom.header.stamp.nsec
+        tran.header.frame_id = "base_link"
+        tran.child_frame_id = "odom"
+        tran.transform.translation.x = odom.pose.pose.position.x
+        tran.transform.translation.y = odom.pose.pose.position.y
+        tran.transform.translation.z = odom.pose.pose.position.z
+        tran.transform.rotation.x = odom.pose.pose.orientation.x
+        tran.transform.rotation.y = odom.pose.pose.orientation.y
+        tran.transform.rotation.z = odom.pose.pose.orientation.z
+        tran.transform.rotation.w = odom.pose.pose.orientation.w
+        br.sendTransform(tran)
+
+        rate.sleep()
+
+if __name__=="__main__":
+
+    rospy.init_node('dummy_odom')
+
+    odom = Odometry()
+    odom.header.seq = 0
+    odom.header.stamp = rospy.get_time()	#second
+    odom.header.frame_id = "base_link"
+    odom.child_frame_id = "odom"
+    odom.pose.pose.position.x = 0
+    odom.pose.pose.position.y = 0
+    odom.pose.pose.position.z = 0
+
+    odom.pose.pose.orientation.x = 0
+    odom.pose.pose.orientation.y = 0
+    odom.pose.pose.orientation.z = 0
+    odom.pose.pose.orientation.w = 1
+
+    odom.twist.twist.linear.x = 0
+    odom.twist.twist.linear.y = 0
+    odom.twist.twist.linear.z = 0
+    odom.twist.twist.angular.x = 0
+    odom.twist.twist.angular.y = 0
+    odom.twist.twist.angular.z = 0
+    
+    second = rospy.get_time()
+    second_prev = second
+
+    rospy.Subscriber("cmd_vel", Twist, cmdAutoCallback)
+    odom_pub = rospy.Publisher('odom', Odometry, queue_size=5)
+    br = tf2_ros.TransformBroadcaster()
+    tran = TransformStamped()
+    
+    try:
+        while not rospy.is_shutdown():
+            operation()
+    except rospy.ROSInterruptException:
+        pass

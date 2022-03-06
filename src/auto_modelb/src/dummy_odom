@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+# 
+# DUMMY ODOM
+#	Author: Muhammad Irsyad Sahalan
+#	Date : 16/02/2022
+#	Descripton : dummy odometry NOTE: THIS VERSION IS FOR +VE FORWARD MOTION ONLY
+# 	license :
+# 
+
+import rospy
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
+import time
+
+second = 0
+second_prev = 0
+
+
+def cmdAutoCallback(data):
+    global second
+    global second_prev
+    second = rospy.get_time()
+    #print("%.2f - %.2f" %(second, second_prev))
+    #t = second-second_prev
+    odom.pose.pose.position.x = odom.pose.pose.position.x + data.linear.x*(second-second_prev)
+    second_prev = second
+    
+    
+def operation():
+    rate = rospy.Rate(30)
+    while not rospy.is_shutdown():
+        odom.header.seq = odom.header.seq + 1
+        odom.header.stamp = rospy.Time.now()
+        odom_pub.publish(odom)
+        print(odom)
+        rate.sleep()
+
+if __name__=="__main__":
+
+    rospy.init_node('dummy_odom')
+
+    odom = Odometry()
+    odom.header.seq = 0
+    odom.header.stamp = rospy.get_time()	#second
+    odom.header.frame_id = "base_link"
+    odom.child_frame_id = "odom"
+    odom.pose.pose.position.x = 0
+    odom.pose.pose.position.y = 0
+    odom.pose.pose.position.z = 0
+
+    odom.pose.pose.orientation.x = 1   #how to calculate
+    odom.pose.pose.orientation.y = 0
+    odom.pose.pose.orientation.z = 0
+    odom.pose.pose.orientation.w = 0
+
+    odom.twist.twist.linear.x = 0
+    odom.twist.twist.linear.y = 0
+    odom.twist.twist.linear.z = 0
+    odom.twist.twist.angular.x = 0
+    odom.twist.twist.angular.y = 0
+    odom.twist.twist.angular.z = 0
+    
+    second = rospy.get_time()
+    second_prev = second
+
+    rospy.Subscriber("cmd_vel", Twist, cmdAutoCallback)
+    odom_pub = rospy.Publisher('odom', Odometry, queue_size=5)
+    
+    try:
+        while not rospy.is_shutdown():
+            operation()
+    except rospy.ROSInterruptException:
+        pass

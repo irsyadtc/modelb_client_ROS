@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+# 
+# AUTO FORWARD
+#	Author: Muhammad Irsyad Sahalan
+#	Date : 16/02/2022
+#	Descripton : forward motion by input distance
+# 	license :
+# 
+
+import rospy
+from std_msgs.msg import String
+from geometry_msgs.msg import Twist, Point
+from nav_msgs.msg import Odometry
+from math import sqrt
+from auto_modelb.srv import userInput, userInputResponse
+
+def odomCallback(data):
+    odom = data
+
+def reset():
+    state = 0
+    point_start.x = odom.linear.x
+    point_start.y = odom.linear.y
+
+def handle_user_input(req):
+    distance = req.distance
+    if distance > 0:
+        point_start.x = odom.linear.x
+        point_start.y = odom.linear.y
+        state = 1
+    return userInputResponse("OK")
+    print("handle_user_input")
+
+def operation():
+    # 0 idle
+    # 1 moving
+    # 2 finish
+
+    if state == 0:
+        twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+        twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+    elif state == 1:
+        #while state ==1:
+        #check location vs target
+        dx = odom.linear.x - point_start.x
+        dy = odom.linear.y - point_start.y
+        dist_trav = sqrt(pow(dx,2)+pow(dy,2))
+        #decide motion
+        if dist_trav < distance: #keep moving
+            if obstacle == False:
+                twist.linear.x = 1; twist.linear.y = 0; twist.linear.z = 0
+                twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+            else:
+                twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+                twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+        else: # stop
+            twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+            twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+            reset()
+    cmd_auto_pub.publish(twist)
+    print("state: %d" %(state))
+
+
+if __name__=="__main__":
+    rospy.init_node('auto_modelb')
+    cmd_auto_pub = rospy.Publisher('cmd_auto', Twist, queue_size=10)
+    rospy.Subscriber("odom", Odometry, odomCallback)
+    rospy.Subscriber("user_input", String, queue_size=5)
+    #object list subscriber from realsense
+    s = rospy.Service("user_input", userInput, handle_user_input)
+    
+    #global odom
+    odom = Odometry()
+    twist = Twist()
+    point_start = Point()
+    distance = 0.0
+    start = False
+    state = 0
+    obstacle = False
+   
+    try:
+        while not rospy.is_shutdown():
+            operation()
+    except rospy.ROSInterruptException:
+        pass

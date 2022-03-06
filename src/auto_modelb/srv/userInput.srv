@@ -1,0 +1,4 @@
+string command
+float32 distance
+---
+string response

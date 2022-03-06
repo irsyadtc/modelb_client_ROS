@@ -1,0 +1,5 @@
+/build
+/devel
+/src/geometry2/*~
+/src/geometry2/*.pyc
+/src/geometry2/#*
