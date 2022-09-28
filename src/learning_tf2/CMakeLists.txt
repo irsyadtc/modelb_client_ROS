@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   turtlesim
+  geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -136,6 +137,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/learning_tf2_node.cpp)
+add_executable(tf2_broadcaster nodes/tf2_broadcaster.cpp)
+add_executable(tf2_staticbroadcaster nodes/tf2_staticbroadcaster.cpp)
+add_executable(tf2_add_frame nodes/tf2_add_frame.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -151,6 +155,9 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(tf2_broadcaster ${catkin_LIBRARIES})
+target_link_libraries(tf2_staticbroadcaster ${catkin_LIBRARIES})
+target_link_libraries(tf2_add_frame ${catkin_LIBRARIES})
 
 #############
 ## Install ##

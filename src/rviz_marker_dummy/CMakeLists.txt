@@ -161,8 +161,6 @@ add_executable(marker_dummy_220902_02 src/marker_dummy_220902_02.cpp)
 #add_dependencies(rviz_marker_dummy ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(marker_dummy_220902_02 ${catkin_LIBRARIES})
 
-add_executable(talkera src/talker.cpp)
-target_link_libraries(talkera ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -1,0 +1,9 @@
+HOW TO MAKE A PGM MAP
+
+This python script was modified on 220914 for this PC specifications:
+- user name: irsyad
+- ubuntu: ubuntu 20.04 lts
+- ros: Noetic
+- python: 3
+
+If you happens to reuse this code, open MakeROSMap.py and change the 'codeDirectory' value to your current working directory.
