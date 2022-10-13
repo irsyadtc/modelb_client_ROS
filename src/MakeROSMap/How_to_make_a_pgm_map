@@ -7,3 +7,6 @@ This python script was modified on 220914 for this PC specifications:
 - python: 3
 
 If you happens to reuse this code, open MakeROSMap.py and change the 'codeDirectory' value to your current working directory.
+
+TO RUN:
+python3 MakeROSMap.py
